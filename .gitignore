@@ -11,3 +11,6 @@ wheels/
 
 # IDE
 .idea/
+
+# API 密钥 (本地专用, 严禁提交/推送)
+apikey.txt
