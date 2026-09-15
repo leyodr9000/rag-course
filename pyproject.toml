@@ -1,0 +1,17 @@
+[project]
+name = "NYSF"
+version = "0.1.0"
+description = "NYSF project (Python 3.8)"
+readme = "README.md"
+authors = [
+    { name = "leyodr9000", email = "leyodr9000@gitee.com" }
+]
+requires-python = ">=3.8,<3.9"
+dependencies = []
+
+[project.scripts]
+nysf = "nysf:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
