@@ -1,6 +1,6 @@
-import json
 import os
 import sys
+import json
 
 import httpx
 from dotenv import load_dotenv
@@ -13,24 +13,23 @@ if hasattr(sys.stdout, "reconfigure"):
 # 加载环境变量 (项目根目录的 .env, 已加入 .gitignore, 不会被上传)
 load_dotenv()
 
-# 从环境变量中读取 API_KEY
+# 1. 获取 API Key 并初始化客户端
 api_key = os.getenv("TOKENRHYTHM_API_KEY")
 if not api_key:
-    raise RuntimeError("未读取到 TOKENRHYTHM_API_KEY, 请检查项目根目录 .env 文件")
+    raise RuntimeError("未读取到 TOKENRHYTHM_API_KEY，请检查项目根目录 .env 文件")
 
 client = OpenAI(
     api_key=api_key,
     base_url="https://tokenrhythm.studio/v1",
     timeout=60,
-    # 不走系统代理: 本机 127.0.0.1:7890 代理对该站点 TLS 握手异常, 直连正常
+    # 不走系统代理：本机 127.0.0.1:7890 代理对该站点 TLS 握手异常，直连正常
     http_client=httpx.Client(trust_env=False),
 )
 
-# 提取目标字段 (schema), 注意要和示例 answers 里的键一致, 别漏了"开盘价"
+# 2. 定义需要抽取的字段结构
 schema = ['日期', '股票名称', '开盘价', '收盘价', '成交量']
 
-# 示例数据: content 是原文, answers 是模型应该输出的标准答案
-# (注意: 示例里的事实必须和原文一致, 日期/数值抄错会教坏模型)
+# 3. 准备示例数据（Few-shot 学习）
 examples_data = [
     {
         "content": "2023-01-10，股市震荡，股票强大科技今日开盘价100rmb，一度飙升至105rmb",
@@ -54,42 +53,35 @@ examples_data = [
     }
 ]
 
-# 提问数据 (第2条和示例2很像但日期不同, 用来检验模型是真的在抽取还是照抄示例)
+# 分类列表 (原代码中定义了但后续逻辑未直接使用，保留)
+examples_types = ['新闻报道', '财务报告', '公司公告', '分析师报告']
+
+# 4. 准备提问数据
 questions = [
-    "2025-06-16，股市利好，股票传智教育A股今日开盘价66人民币，一度飙升至70人民币，随后回落至65人民币，最终以68人民币收盘，成交量达到3560000。",
-    "2025-06-06，股市利好，股票英伟达美股今日开盘价105美元，一度飙升至109美元，随后回落至100美元，最终以116美元收盘，成交量达到3560000。",
+    "2025-06-16，股市利好，股票传智教育A股今日开盘价66人民币，一度飙升至70人民币，随后回落至65人民币，最终以68人民币收盘，成交量达到123000。",
+    "2025-06-06，股市利好，股票黑马程序员A股今日开盘价200人民币，一度飙升至211人民币，随后回落至201人民币，最终以206人民币收盘。",
 ]
 
-#原始发送方式（附加历史消息）
-"""
-[
-    {"role": "system",      "content": "你是金融专家，从文本中提取['日期', '股票名称', ...]字段，缺失填'未知'，只输出JSON 下面有示例："},
-
-    {"role": "user",        "content": "2023-01-10，股市震荡，股票强大科技............."},
-    {"role": "assistant",   "content": "{\"日期\": \"2023-01-10\", ...}"},
-
-    {"role": "user",        "content": "要提问的问题"}
-]
-"""
-
+# 5. 初始化对话历史（包含 System Prompt）
 messages = [
-{"role": "system",
- "content": f"你是金融专家，从文本中提取{schema}这几个字段的值，文本里没有提到的字段填'未知'，只输出一个JSON对象，不要输出任何其他内容。下面有示例："},
+    {"role": "system", "content": f"你帮我完成信息抽取，我给你句子，你抽取{schema}信息，按照JSON字符串输出，如果某些信息不存在，用'原文未提及显示'"}
 ]
 
-#示例同样组织成 user(原文) + assistant(JSON答案) 一对
+# 6. 将示例数据加入对话历史（修复了原图列表调用 .items() 的错误）
 for example in examples_data:
+    # 将字典格式的 answers 转换为 JSON 字符串
+    assistant_content = json.dumps(example["answers"], ensure_ascii=False)
     messages.append({"role": "user", "content": example["content"]})
-    messages.append({"role": "assistant", "content": json.dumps(example["answers"], ensure_ascii=False)})
+    messages.append({"role": "assistant", "content": assistant_content})
 
-#向模型提问
-for i, q in enumerate(questions, 1):
+# 7. 向模型循环提问
+for q in questions:
     response = client.chat.completions.create(
-        model="deepseek-v4-flash-0731",
-        # f 格式化字符串
-        messages=messages+[{"role":"user","content":f"按照示例，提取这段文本中的字段信息：{q}"}]
+        model="qwen3.8-flash",
+        # 将当前提问追加到历史消息后面
+        messages=messages + [{"role": "user", "content": f"按照示例，回答这段文本的信息抽取：{q}"}],
     )
-    #注意: 打印要放在循环里, 放在循环外只会留下最后一个问题的结果
-    print(f"问题{i}提取结果:")
-    print(response.choices[0].message.content)
-    print()
+    
+    # 打印模型的回答结果
+    print(f"提问内容：{q}")
+    print(f"模型回复：{response.choices[0].message.content}\n")
