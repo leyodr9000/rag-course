@@ -31,7 +31,7 @@ examples_data = {       # 示例数据
     '公司公告': '本公司高兴地宣布成功完成最新一轮并购交易，收购了一家在人工智能领域领先的公司。这一战略举措将有助于扩大我们的业务领域，提高市场竞争力',
     '分析师报告': '最新的行业分析报告指出，科技公司的创新将成为未来增长的主要推动力。云计算、人工智能和数字化转型被认为是引领行业发展的关键因素，投资者应关注这些趋势'
 }
-# 分类列表 (注意是"财务报告", 要和示例数据的 key 一致)
+# 分类列表
 examples_types = ['新闻报道', '财务报告', '公司公告', '分析师报告']
 
 # 提问数据
@@ -43,7 +43,7 @@ questions = [
     "小明喜欢小新哟"
 ]
 
-# 原始发送方式（附加历史消息）
+#原始发送方式（附加历史消息）
 """
 [
     {"role": "system",      "content": "你是金融专家，将文本分类为['新闻报道', '财务报告', '公司公告', '分析师报告']，不清楚的分类为'不清楚类别' 下面有示例："},
@@ -61,24 +61,22 @@ questions = [
 ]
 """
 
-# system 里直接引用 examples_types 变量, 和示例数据永远保持同步
 messages = [
-    {"role": "system",
-     "content": f"你是金融专家，将文本分类为{examples_types}，不清楚的分类为'不清楚类别' 下面有示例："},
+{"role": "system",
+ "content": "你是金融专家，将文本分类为['新闻报道', '财务报告', '公司公告', '分析师报告']，不清楚的分类为'不清楚类别' 下面有示例："},
 ]
 
-# 调用 items 的作用是取到 key 和 value: 每个示例组织成 user(文本) + assistant(类别) 一对
-for key, value in examples_data.items():
-    messages.append({"role": "user", "content": value})
+#调用items的作用是取到key和value
+for key,value in examples_data.items():
+    messages.append({"role": "user","content": value})
     messages.append({"role": "assistant", "content": key})
 
-# 向模型提问: 每个问题单独调用一次, messages 本身不被污染 (用 + 拼接新列表)
-for i, q in enumerate(questions, 1):
+#向模型提问
+for q in questions:
     response = client.chat.completions.create(
         model="deepseek-v4-flash-0731",
         # f 格式化字符串
-        messages=messages + [{"role": "user", "content": f"按照示例，回答这段文本的分类类别：{q}"}],
-        temperature=0,  # 分类任务要稳定, 温度调到 0
+        messages=messages+[{"role":"user","content":f"按照示例，回答这段文本的分类类别：{q}"}]
     )
-    category = response.choices[0].message.content.strip()
-    print(f"问题{i} → {category}    (原文开头: {q[:18]}...)")
+    #注意: 打印要放在循环里, 放在循环外只会留下最后一个问题的结果
+    print(response.choices[0].message.content)
