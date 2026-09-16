@@ -33,10 +33,19 @@ response = client.chat.completions.create(
             "content": "你好呀，自我介绍一下吧"
         }
     ],
-    stream=False,
+    stream=True,
     temperature=0.9,
 )
 
-print("模型回复:")
-# print(response.choices[0].message.content)
-print(response)
+print("模型回复(流式输出):")
+# stream=True 时 response 是一个迭代器, 每迭代一次吐出一小段 (chunk)
+for chunk in response:
+    # 防 IndexError: 最开始可能有 choices 为空的 chunk
+    # 防 None: 第一个 chunk 往往只带 role 不带内容, delta.content 为 None
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(
+            chunk.choices[0].delta.content,
+            end="",      # 中文不要用 " " 做分隔, 否则每个词块之间会被塞进空格
+            flush=True,  # 每收到一小块立刻强制刷出, 实现"打字机"效果
+        )
+print()  # 流结束后补一个换行, 让光标回到行首
