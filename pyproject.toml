@@ -1,13 +1,15 @@
 [project]
 name = "rag-course"
 version = "0.1.0"
-description = "rag-course project (Python 3.8)"
+description = "rag-course project (Python 3.12)"
 readme = "README.md"
 authors = [
     { name = "leyodr9000", email = "leyodr9000@gitee.com" }
 ]
-requires-python = ">=3.8,<3.9"
+requires-python = ">=3.12"
 dependencies = [
+    "langchain>=0.0.27",
+    "langchain-openai>=1.6.2",
     "openai>=2.2.0",
     "python-dotenv>=1.0.1",
 ]
