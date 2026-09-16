@@ -30,9 +30,6 @@ model = init_chat_model(
 
 print(type(model))
 
-model.invoke("你是谁？")
-
-print(responses)
 
 # 3、可以取消下面注释试一次真实调用
 # print("正在调用大模型......")
