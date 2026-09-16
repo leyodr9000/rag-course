@@ -1,5 +1,6 @@
 import os
 import sys
+from http.client import responses
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
@@ -19,13 +20,19 @@ if not api_key:
 
 # 2、初始化模型 (langchain 不直接支持的模型 → 通过兼容 OpenAI 协议的形式调用)
 model = init_chat_model(
-    model="deepseek-v4-flash-0731",   # 模型名称, 一直用这个
-    model_provider="openai",          # 中转站兼容 OpenAI 协议，指定 openai 提供商
+    model="deepseek-v4-flash-0731",
+    model_provider="openai",
     base_url=base_url,
     api_key=api_key,
+    temperature=1.5,
+    top_p=0.9,
 )
 
-print(model)
+print(type(model))
+
+model.invoke("你是谁？")
+
+print(responses)
 
 # 3、可以取消下面注释试一次真实调用
 # print("正在调用大模型......")
