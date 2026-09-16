@@ -77,7 +77,7 @@ for example in examples_data:
 # 7. 向模型循环提问
 for q in questions:
     response = client.chat.completions.create(
-        model="qwen3.8-flash",
+        model="deepseek-v4-flash-0731",
         # 将当前提问追加到历史消息后面
         messages=messages + [{"role": "user", "content": f"按照示例，回答这段文本的信息抽取：{q}"}],
     )
