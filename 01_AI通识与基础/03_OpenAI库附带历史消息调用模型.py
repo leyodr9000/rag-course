@@ -21,7 +21,7 @@ client = OpenAI(
 
 print("正在调用大模型......")
 response = client.chat.completions.create(
-    model="qwen3.7-max",
+    model="deepseek-v4-flash-0731",
     messages=[
         # system: 设定身份; 之后的 user/assistant 交替就是把历史对话原样带上,
         # 模型全靠这些历史记录才有"记忆", 不带的话它根本不知道小明小红养了什么
