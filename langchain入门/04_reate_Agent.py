@@ -14,7 +14,21 @@ load_dotenv()
 
 agent = create_agent(model="openai:deepseek-chat")
 
-response = agent.invoke({
-    "messages":[{"role":"user","content":"你是谁呀？"}]
-})
-print(response)
+# response = agent.invoke({
+#     "messages":[{"role":"user","content":"你是谁呀？"}]
+# })
+# print(response)
+
+# stream_mode 表示流的模式，也是智能体中特有的方式
+messages = agent.stream(
+    input={
+        "messages": [{"role": "user", "content": "你是谁呀？"}]
+    },
+    stream_mode="messages",
+)
+
+print(type(messages))
+for token, metadata in messages:
+    if token.content:
+        print(token.content, end="", flush=True)
+print()
