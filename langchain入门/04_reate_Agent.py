@@ -3,6 +3,7 @@ import sys
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.tools import tool
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 # 防止 Windows 控制台 GBK 编码打不出 emoji/特殊字符
 if hasattr(sys.stdout, "reconfigure"):
@@ -32,12 +33,23 @@ print("正在调用大模型...")
 response = agent.invoke({
     "messages": [
         {"role":"system","content":"你是一个热心的AI助手"},
-        {"role":"user","content":"你好，我是巨哥"},
-        {"role":"assistant","content":"你好，巨哥！很高兴认识你！！"},
+        {"role":"user","content":"你好，我是臣哥"},
+        {"role":"assistant","content":"你好，臣哥！很高兴认识你！！"},
         {"role":"user","content":"南阳今天天气怎么样？"}
     ]
 })
 
-# 5、打印响应结果
+# 5、打印响应结果 (用系统自带的各种消息类型给回答分类)
 for message in response['messages']:
-    print(message)
+    if isinstance(message, SystemMessage):
+        print(f"[系统设定] {message.content}")
+    elif isinstance(message, HumanMessage):
+        print(f"[用户] {message.content}")
+    elif isinstance(message, ToolMessage):
+        print(f"[工具{message.name}返回] {message.content}")
+    elif isinstance(message, AIMessage):
+        # AI 消息分两种: 发起工具调用 / 最终回答
+        if message.tool_calls:
+            print(f"[AI-调用工具] {message.tool_calls}")
+        else:
+            print(f"[AI-回答] {message.content}")
