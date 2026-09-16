@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import httpx
 from openai import OpenAI
@@ -8,11 +8,9 @@ from openai import OpenAI
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# 密钥放在项目根目录的 apikey.txt 里 (已加入 .gitignore, 不会被推到 GitHub)
-API_KEY = (Path(__file__).resolve().parents[2] / "apikey.txt").read_text(encoding="utf-8").strip()
-
-# 人设提示词: 同样从项目根目录加载 (已加入 .gitignore, 不会被推到 GitHub)
-SYSTEM_PROMPT = (Path(__file__).resolve().parents[2] / "雪菲娅_人格设定.txt").read_text(encoding="utf-8").strip()
+# 密钥和人设都在项目根目录 (本文件在 项目根/01_AI通识与基础/ 下, parents[1] 即项目根)
+API_KEY = (Path(__file__).resolve().parents[1] / "apikey.txt").read_text(encoding="utf-8").strip()
+SYSTEM_PROMPT = (Path(__file__).resolve().parents[1] / "雪菲娅_人格设定.txt").read_text(encoding="utf-8").strip()
 
 client = OpenAI(
     api_key=API_KEY,
@@ -40,4 +38,5 @@ response = client.chat.completions.create(
 )
 
 print("模型回复:")
-print(response.choices[0].message.content)
+# print(response.choices[0].message.content)
+print(response)
