@@ -1,0 +1,84 @@
+import os
+import sys
+
+import httpx
+from dotenv import load_dotenv
+from openai import OpenAI
+
+# 防止 Windows 控制台 GBK 编码打不出 emoji/特殊字符
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+# 加载环境变量 (项目根目录的 .env, 已加入 .gitignore, 不会被上传)
+load_dotenv()
+
+# 从环境变量中读取 API_KEY
+api_key = os.getenv("TOKENRHYTHM_API_KEY")
+if not api_key:
+    raise RuntimeError("未读取到 TOKENRHYTHM_API_KEY, 请检查项目根目录 .env 文件")
+
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://tokenrhythm.studio/v1",
+    timeout=60,
+    # 不走系统代理: 本机 127.0.0.1:7890 代理对该站点 TLS 握手异常, 直连正常
+    http_client=httpx.Client(trust_env=False),
+)
+
+examples_data = {       # 示例数据
+    '新闻报道': '今日，股市经历了一轮震荡，受到宏观经济数据和全球贸易紧张局势的影响。投资者密切关注美联储可能的政策调整，以适应市场的不确定性。',
+    '财务报告': '本公司年度财务报告显示，去年公司实现了稳步增长的盈利，同时资产负债表呈现强劲的状况。经济环境的稳定和管理层的有效战略执行为公司的健康发展奠定了基础。',
+    '公司公告': '本公司高兴地宣布成功完成最新一轮并购交易，收购了一家在人工智能领域领先的公司。这一战略举措将有助于扩大我们的业务领域，提高市场竞争力',
+    '分析师报告': '最新的行业分析报告指出，科技公司的创新将成为未来增长的主要推动力。云计算、人工智能和数字化转型被认为是引领行业发展的关键因素，投资者应关注这些趋势'
+}
+# 分类列表 (注意是"财务报告", 要和示例数据的 key 一致)
+examples_types = ['新闻报道', '财务报告', '公司公告', '分析师报告']
+
+# 提问数据
+questions = [
+    "今日，央行发布公告宣布降低利率，以刺激经济增长。这一降息举措将影响贷款利率，并在未来几个季度内对金融市场产生影响。",
+    "ABC公司今日发布公告称，已成功完成对XYZ公司股权的收购交易。本次交易是ABC公司在扩大业务范围、加强市场竞争力方面的重要举措。据悉，此次收购将进一步巩固ABC公司在行业中的地位，并为未来业务发展提供更广阔的发展空间。详情请见公司官方网站公告栏",
+    "公司资产负债表显示，公司偿债能力强劲，现金流充足，为未来投资和扩张提供了坚实的财务基础。",
+    "最新的分析报告指出，可再生能源行业预计将在未来几年经历持续增长，投资者应该关注这一领域的投资机会",
+    "小明喜欢小新哟"
+]
+
+# 原始发送方式（附加历史消息）
+"""
+[
+    {"role": "system",      "content": "你是金融专家，将文本分类为['新闻报道', '财务报告', '公司公告', '分析师报告']，不清楚的分类为'不清楚类别' 下面有示例："},
+
+    {"role": "user",        "content": "今日，央行发布公告宣布降............."},
+    {"role": "assistant",   "content": "新闻报道"},
+    {"role": "user",        "content": "ABC公司今日发布公告称，已成功完成对XYZ公司股................."},
+    {"role": "assistant",   "content": "财务报告"},
+    {"role": "user",        "content": "公司资产负债表显示，公司偿债能力强劲，现金流充足..................."},
+    {"role": "assistant",   "content": "公司公告"},
+    {"role": "user",        "content": "最新的分析报告指出，可再生能源............."},
+    {"role": "assistant",   "content": "分析师报告"},
+
+    {"role": "user",        "content": "要提问的问题"}
+]
+"""
+
+# system 里直接引用 examples_types 变量, 和示例数据永远保持同步
+messages = [
+    {"role": "system",
+     "content": f"你是金融专家，将文本分类为{examples_types}，不清楚的分类为'不清楚类别' 下面有示例："},
+]
+
+# 调用 items 的作用是取到 key 和 value: 每个示例组织成 user(文本) + assistant(类别) 一对
+for key, value in examples_data.items():
+    messages.append({"role": "user", "content": value})
+    messages.append({"role": "assistant", "content": key})
+
+# 向模型提问: 每个问题单独调用一次, messages 本身不被污染 (用 + 拼接新列表)
+for i, q in enumerate(questions, 1):
+    response = client.chat.completions.create(
+        model="deepseek-v4-flash-0731",
+        # f 格式化字符串
+        messages=messages + [{"role": "user", "content": f"按照示例，回答这段文本的分类类别：{q}"}],
+        temperature=0,  # 分类任务要稳定, 温度调到 0
+    )
+    category = response.choices[0].message.content.strip()
+    print(f"问题{i} → {category}    (原文开头: {q[:18]}...)")
