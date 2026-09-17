@@ -1,5 +1,7 @@
+import base64
 import os
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
@@ -30,12 +32,24 @@ model = init_chat_model(
 # 3、创建Agent
 agent = create_agent(model=model)
 
-# 4、准备多模态消息: content 是一个列表, 由 文本块 + 图片块 组成
+# 4、准备多模态消息
+# 推荐方式: 本地图片 base64 编码后直接塞进消息, 不依赖百炼服务器去下载图片
+# (URL 方式要求服务器能访问该地址, 否则报 Failed to download multimodal content)
+image_path = Path(__file__).resolve().parent / "dog_and_girl.jpeg"
+base64_str = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+image_url = f"data:image/jpeg;base64,{base64_str}"
+
 message = HumanMessage([
     {"type": "text", "text": "描述以下这张图片的内容！"},
-    {"type": "image",
-     "url": "https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg"},
+    {"type": "image", "url": image_url},
 ])
+
+# URL 方式 (备用): 图片必须在公网可访问
+# message = HumanMessage([
+#     {"type": "text", "text": "描述以下这张图片的内容！"},
+#     {"type": "image",
+#      "url": "https://dashscope.oss-cn-beijing.aliyuncs.com/images/dog_and_girl.jpeg"},
+# ])
 
 # 5、流式调用 (注意状态键是 messages, 不是 message)
 stream = agent.stream(
