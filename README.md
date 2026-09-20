@@ -37,6 +37,19 @@ rag-course/
 └── src/rag_course/                         # 包骨架
 ```
 
+## 📖 课程知识体系
+
+> 依据课件《AI 大模型（3）》整理，学习顺序与仓库目录一一对应：
+
+| 阶段 | 核心知识点 | 对应目录 |
+|---|---|---|
+| AI 通识 | AI 发展四阶段（规则符号 → 机器学习 → 深度学习 → 大语言模型）；Transformer 三层结构与“加权求和 + 偏置 + 激活函数”；反向传播与梯度下降；词向量（Token → Embedding）；Attention / MLP | 01_AI通识与基础 |
+| 大模型服务 | 公共 API vs 私有化部署的优劣权衡（成本 / 隐私 / 定制）；DeepSeek、阿里云百炼等开放服务 | 01_AI通识与基础 |
+| API 编程 | 消息记忆（保存回复 + 历史拼接）；三种消息角色（System / User / Assistant）；OpenAI 库三流程（客户端 → 调用 → 处理结果）；流式输出 | 01_AI通识与基础 |
+| Agent | Agent = 传统编程提供的工具 + 大模型的推理规划；`@tool` 自定义工具 | langchain入门 |
+| LangChain 组件 | `init_chat_model` 初始化与参数调整；`PromptTemplate` 提示词模板（Runnable 子类）；Document Loaders（CSV / JSON / PDF / Text）；`RecursiveCharacterTextSplitter` 递归切分 | langchain入门 |
+| RAG 原理 | 三大痛点（知识不实时 / 领域知识缺乏 / 幻觉）；**公式：RAG = 检索技术 + LLM 提示词**；离线准备线 / 在线服务线；检索阶段（query 向量化 → top_k）与生成阶段 | RAG项目案例 |
+
 ## 🧰 技术栈（实测版本）
 
 | 类别 | 组件 | 版本 |
