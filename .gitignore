@@ -18,3 +18,11 @@ apikey.txt
 
 # 人设提示词 (本地专用, 严禁提交/推送)
 *_人格设定.txt
+
+# RAG 项目运行产物
+RAG项目案例/chroma_db/
+RAG项目案例/chat_history/
+RAG项目案例/md5.text
+
+# Word 锁文件
+~$*
