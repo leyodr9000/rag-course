@@ -4,9 +4,14 @@
     Streamlit：当WEB网页元素发生变化，则代码重新执行一遍，代码重新执行一遍则会导致状态的丢失
     此时基于streamlit官方提供的组件，即：session_state会话状态记录器
 """
+import os
 import time
 
 import streamlit as st
+from dotenv import load_dotenv
+
+load_dotenv()  # 加载 .env, 否则 DashScopeEmbeddings 读不到 DASHSCOPE_API_KEY
+
 from knowledge_base import KnowledgeBaseService
 
 # 添加网页标题
