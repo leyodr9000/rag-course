@@ -33,7 +33,6 @@ rag-course/
 │   ├── app_file_uploader.py                # 上传页（Streamlit :8502）
 │   ├── app_qa.py                           # 问答页（Streamlit :8501）
 │   └── data/                               # 测试语料（服装领域 TXT × 3）
-├── 实训报告-李少龙-25.33.docx              # 课程实训报告
 └── src/rag_course/                         # 包骨架
 ```
 
